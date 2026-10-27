@@ -1,0 +1,374 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function hasVerifiedInstitutionalAccount() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('^[^@\\s]+@tecsup\\.edu\\.pe$');
+    }
+
+    function validSkill(skills, index) {
+      return skills.size() > index
+        ? skills[index] is string
+          && skills[index].size() >= 1
+          && skills[index].size() <= 40
+        : true;
+    }
+
+    function validProfile(uid, data) {
+      return data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'career', 'campus', 'bio',
+          'skills', 'portfolioUrl', 'avatarId', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'uid', 'email', 'displayName', 'career', 'campus', 'bio',
+          'skills', 'portfolioUrl', 'avatarId', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == uid
+        && data.uid == request.auth.uid
+        && data.email == request.auth.token.email
+        && data.email.matches('^[^@\\s]+@tecsup\\.edu\\.pe$')
+        && data.displayName is string
+        && data.displayName.size() >= 2
+        && data.displayName.size() <= 60
+        && data.career is string
+        && data.career.size() >= 2
+        && data.career.size() <= 80
+        && data.campus is string
+        && data.campus.size() >= 2
+        && data.campus.size() <= 60
+        && data.bio is string
+        && data.bio.size() <= 500
+        && data.skills is list
+        && data.skills.size() >= 1
+        && data.skills.size() <= 12
+        && validSkill(data.skills, 0)
+        && validSkill(data.skills, 1)
+        && validSkill(data.skills, 2)
+        && validSkill(data.skills, 3)
+        && validSkill(data.skills, 4)
+        && validSkill(data.skills, 5)
+        && validSkill(data.skills, 6)
+        && validSkill(data.skills, 7)
+        && validSkill(data.skills, 8)
+        && validSkill(data.skills, 9)
+        && validSkill(data.skills, 10)
+        && validSkill(data.skills, 11)
+        && data.portfolioUrl is string
+        && data.portfolioUrl.size() <= 300
+        && (data.portfolioUrl == '' || data.portfolioUrl.matches('^https://.+$'))
+        && data.avatarId is int
+        && data.avatarId >= 0
+        && data.avatarId < 6
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validProjectItem(items, index, maximumLength) {
+      return items.size() > index
+        ? items[index] is string
+          && items[index].size() >= 1
+          && items[index].size() <= maximumLength
+        : true;
+    }
+
+    function validProject(data) {
+      return data.keys().hasOnly([
+          'ownerId', 'ownerName', 'ownerCareer', 'title', 'description', 'category',
+          'requiredSkills', 'tools', 'modality', 'campus', 'hoursPerWeek',
+          'deadline', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'ownerId', 'ownerName', 'ownerCareer', 'title', 'description', 'category',
+          'requiredSkills', 'tools', 'modality', 'campus', 'hoursPerWeek',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string
+        && data.ownerId == request.auth.uid
+        && data.ownerName is string
+        && data.ownerName.size() >= 2
+        && data.ownerName.size() <= 60
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && data.ownerName == get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.displayName
+        && data.ownerCareer is string
+        && data.ownerCareer.size() >= 2
+        && data.ownerCareer.size() <= 80
+        && data.ownerCareer == get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.career
+        && data.title is string
+        && data.title.size() >= 5
+        && data.title.size() <= 80
+        && data.description is string
+        && data.description.size() >= 20
+        && data.description.size() <= 1500
+        && data.category is string
+        && data.category.size() >= 2
+        && data.category.size() <= 60
+        && data.requiredSkills is list
+        && data.requiredSkills.size() >= 1
+        && data.requiredSkills.size() <= 12
+        && validProjectItem(data.requiredSkills, 0, 40)
+        && validProjectItem(data.requiredSkills, 1, 40)
+        && validProjectItem(data.requiredSkills, 2, 40)
+        && validProjectItem(data.requiredSkills, 3, 40)
+        && validProjectItem(data.requiredSkills, 4, 40)
+        && validProjectItem(data.requiredSkills, 5, 40)
+        && validProjectItem(data.requiredSkills, 6, 40)
+        && validProjectItem(data.requiredSkills, 7, 40)
+        && validProjectItem(data.requiredSkills, 8, 40)
+        && validProjectItem(data.requiredSkills, 9, 40)
+        && validProjectItem(data.requiredSkills, 10, 40)
+        && validProjectItem(data.requiredSkills, 11, 40)
+        && data.tools is list
+        && data.tools.size() <= 12
+        && validProjectItem(data.tools, 0, 40)
+        && validProjectItem(data.tools, 1, 40)
+        && validProjectItem(data.tools, 2, 40)
+        && validProjectItem(data.tools, 3, 40)
+        && validProjectItem(data.tools, 4, 40)
+        && validProjectItem(data.tools, 5, 40)
+        && validProjectItem(data.tools, 6, 40)
+        && validProjectItem(data.tools, 7, 40)
+        && validProjectItem(data.tools, 8, 40)
+        && validProjectItem(data.tools, 9, 40)
+        && validProjectItem(data.tools, 10, 40)
+        && validProjectItem(data.tools, 11, 40)
+        && data.modality in ['presencial', 'remoto', 'hibrido']
+        && data.campus is string
+        && data.campus.size() >= 2
+        && data.campus.size() <= 60
+        && data.hoursPerWeek is int
+        && data.hoursPerWeek >= 1
+        && data.hoursPerWeek <= 80
+        && (!data.keys().hasAny(['deadline']) || data.deadline is timestamp)
+        && data.status in ['open', 'selecting', 'filled', 'closed']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validProjectStatusTransition(previousStatus, nextStatus) {
+      return nextStatus == previousStatus
+        || (previousStatus == 'open' && nextStatus in ['selecting', 'closed'])
+        || (previousStatus == 'selecting' && nextStatus in ['filled', 'closed'])
+        || (previousStatus == 'filled' && nextStatus == 'closed');
+    }
+
+    function isProjectOwner(projectId) {
+      return exists(/databases/$(database)/documents/projects/$(projectId))
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId
+          == request.auth.uid;
+    }
+
+    function validInterest(projectId, applicantId, data) {
+      return data.keys().hasOnly([
+          'applicantId', 'applicantName', 'message', 'status', 'chatId',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'applicantId', 'applicantName', 'message', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && data.applicantId is string
+        && data.applicantId == applicantId
+        && data.applicantName is string
+        && data.applicantName.size() >= 2
+        && data.applicantName.size() <= 60
+        && data.message is string
+        && data.message.size() >= 10
+        && data.message.size() <= 500
+        && data.status in ['pending', 'accepted', 'rejected']
+        && (!data.keys().hasAny(['chatId'])
+          || (data.chatId is string && data.chatId.size() >= 1 && data.chatId.size() <= 120))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validChat(chatId, data) {
+      return data.keys().hasOnly([
+          'projectId', 'projectTitle', 'ownerId', 'applicantId', 'memberIds',
+          'lastMessage', 'lastMessageAt', 'createdAt'
+        ])
+        && data.keys().hasAll([
+          'projectId', 'projectTitle', 'ownerId', 'applicantId', 'memberIds',
+          'lastMessage', 'lastMessageAt', 'createdAt'
+        ])
+        && data.projectId is string
+        && data.projectTitle is string
+        && data.projectTitle.size() >= 5
+        && data.projectTitle.size() <= 80
+        && data.ownerId == request.auth.uid
+        && data.applicantId is string
+        && data.applicantId != data.ownerId
+        && data.memberIds is list
+        && data.memberIds.size() == 2
+        && data.memberIds[0] == data.ownerId
+        && data.memberIds[1] == data.applicantId
+        && chatId == data.projectId + '_' + data.applicantId
+        && data.lastMessage == ''
+        && data.lastMessageAt is timestamp
+        && data.createdAt is timestamp;
+    }
+
+    function isChatMember(chatId) {
+      return exists(/databases/$(database)/documents/chats/$(chatId))
+        && request.auth.uid in get(
+          /databases/$(database)/documents/chats/$(chatId)
+        ).data.memberIds;
+    }
+
+    function validMessage(data) {
+      return data.keys().hasOnly(['senderId', 'text', 'createdAt'])
+        && data.keys().hasAll(['senderId', 'text', 'createdAt'])
+        && data.senderId is string
+        && data.senderId == request.auth.uid
+        && data.text is string
+        && data.text.size() >= 1
+        && data.text.size() <= 1000
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{uid} {
+      allow get: if hasVerifiedInstitutionalAccount()
+        && request.auth.uid == uid;
+
+      allow list: if false;
+
+      allow create: if hasVerifiedInstitutionalAccount()
+        && validProfile(uid, request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if hasVerifiedInstitutionalAccount()
+        && request.auth.uid == uid
+        && validProfile(uid, request.resource.data)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    match /projects/{projectId} {
+      allow get, list: if hasVerifiedInstitutionalAccount();
+
+      allow create: if hasVerifiedInstitutionalAccount()
+        && validProject(request.resource.data)
+        && request.resource.data.status == 'open'
+        && (!request.resource.data.keys().hasAny(['deadline'])
+          || request.resource.data.deadline > request.time)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if hasVerifiedInstitutionalAccount()
+        && resource.data.ownerId == request.auth.uid
+        && validProject(request.resource.data)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validProjectStatusTransition(
+          resource.data.status,
+          request.resource.data.status
+        )
+        && (!request.resource.data.keys().hasAny(['deadline'])
+          || (resource.data.keys().hasAny(['deadline'])
+            && request.resource.data.deadline == resource.data.deadline)
+          || request.resource.data.deadline > request.time)
+        && request.resource.data.updatedAt == request.time;
+
+      // El MVP conserva las publicaciones y las cierra cambiando su estado.
+      allow delete: if false;
+    }
+
+    match /projects/{projectId}/interests/{applicantId} {
+      allow get: if hasVerifiedInstitutionalAccount()
+        && (request.auth.uid == applicantId || isProjectOwner(projectId));
+
+      allow list: if hasVerifiedInstitutionalAccount()
+        && isProjectOwner(projectId);
+
+      allow create: if hasVerifiedInstitutionalAccount()
+        && request.auth.uid == applicantId
+        && validInterest(projectId, applicantId, request.resource.data)
+        && request.resource.data.applicantName == get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.displayName
+        && request.resource.data.status == 'pending'
+        && !request.resource.data.keys().hasAny(['chatId'])
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId
+          != request.auth.uid
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.status
+          == 'open'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if hasVerifiedInstitutionalAccount()
+        && isProjectOwner(projectId)
+        && resource.data.status == 'pending'
+        && validInterest(projectId, applicantId, request.resource.data)
+        && request.resource.data.applicantId == resource.data.applicantId
+        && request.resource.data.applicantName == resource.data.applicantName
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && (
+          (request.resource.data.status == 'rejected'
+            && !request.resource.data.keys().hasAny(['chatId']))
+          ||
+          (request.resource.data.status == 'accepted'
+            && request.resource.data.chatId == projectId + '_' + applicantId
+            && getAfter(/databases/$(database)/documents/chats/$(request.resource.data.chatId)).data.projectId == projectId)
+        );
+
+      allow delete: if false;
+    }
+
+    match /chats/{chatId} {
+      allow get, list: if hasVerifiedInstitutionalAccount()
+        && request.auth.uid in resource.data.memberIds;
+
+      allow create: if hasVerifiedInstitutionalAccount()
+        && validChat(chatId, request.resource.data)
+        && isProjectOwner(request.resource.data.projectId)
+        && getAfter(/databases/$(database)/documents/projects/$(request.resource.data.projectId)/interests/$(request.resource.data.applicantId)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/projects/$(request.resource.data.projectId)/interests/$(request.resource.data.applicantId)).data.chatId == chatId
+        && request.resource.data.lastMessageAt == request.time
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if hasVerifiedInstitutionalAccount()
+        && request.auth.uid in resource.data.memberIds
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastMessage', 'lastMessageAt'])
+        && request.resource.data.lastMessage is string
+        && request.resource.data.lastMessage.size() >= 1
+        && request.resource.data.lastMessage.size() <= 1000
+        && request.resource.data.lastMessageAt == request.time;
+
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if hasVerifiedInstitutionalAccount()
+          && isChatMember(chatId);
+
+        allow create: if hasVerifiedInstitutionalAccount()
+          && isChatMember(chatId)
+          && validMessage(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && getAfter(/databases/$(database)/documents/chats/$(chatId)).data.lastMessage
+            == request.resource.data.text
+          && getAfter(/databases/$(database)/documents/chats/$(chatId)).data.lastMessageAt
+            == request.time;
+
+        allow update, delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
